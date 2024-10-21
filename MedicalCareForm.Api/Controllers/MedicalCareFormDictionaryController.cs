@@ -21,7 +21,7 @@ namespace MedicalCareForm.Api.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<List<MedicalCareFormDictionary>>> GetAllDictionaries()
+        public async Task<ActionResult<List<MedicalCareFormDictionary>>> GetAll()
         {
             var dictionaries = await _repository.GetAll().ToListAsync();
 
@@ -38,7 +38,7 @@ namespace MedicalCareForm.Api.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<MedicalCareFormDictionary>> GetDictionary(int id)
+        public async Task<ActionResult<MedicalCareFormDictionary>> Get(int id)
         {
             var dictionary = await _repository.GetByKeyAsync(id);
 
@@ -61,7 +61,7 @@ namespace MedicalCareForm.Api.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<List<MedicalCareFormDictionary>>> AddDictionary(MedicalCareFormDictionaryDTO dictionaryDTO)
+        public async Task<ActionResult<List<MedicalCareFormDictionary>>> Add(MedicalCareFormDictionaryDTO dictionaryDTO)
         {
             MedicalCareFormDictionary dictionary = new()
             {
@@ -74,11 +74,13 @@ namespace MedicalCareForm.Api.Controllers
             _repository.Add(dictionary);
             await _repository.SaveChangesAsync();
 
-            return await GetAllDictionaries();
+            dictionaryDTO.Id = dictionary.Id;
+
+            return Ok(dictionaryDTO);
         }
 
         [HttpPut("{id}")]
-        public async Task<ActionResult<List<MedicalCareFormDictionary>>> UpdateDictionary(int id, MedicalCareFormDictionaryDTO newDictionaryDTO)
+        public async Task<ActionResult<List<MedicalCareFormDictionary>>> Update(int id, MedicalCareFormDictionaryDTO newDictionaryDTO)
         {
             var dictionary = await _repository.GetByKeyAsync(id);
 
@@ -94,11 +96,13 @@ namespace MedicalCareForm.Api.Controllers
 
             await _repository.SaveChangesAsync();
 
-            return await GetAllDictionaries();
+            newDictionaryDTO.Id = dictionary.Id;
+
+            return Ok(newDictionaryDTO);
         }
 
         [HttpDelete("{id}")]
-        public async Task<ActionResult<List<MedicalCareFormDictionary>>> DeleteDictionary(int id)
+        public async Task<ActionResult<List<MedicalCareFormDictionary>>> Delete(int id)
         {
             var dictionary = await _repository.GetByKeyAsync(id);
 
@@ -107,34 +111,54 @@ namespace MedicalCareForm.Api.Controllers
                 return NotFound();
             }
 
-            _repository.Delete(dictionary);
+            await _repository.VirtualDelete(dictionary, 0);
             await _repository.SaveChangesAsync();
 
-            return await GetAllDictionaries();
+            return Ok("Успешно удалено");
         }
 
-        //[HttpPost("upload")]
-        //public async Task<ActionResult<List<MedicalCareFormDictionary>>> UploadFile(IFormFile file)
-        //{
-        //    Encoding encoding = Encoding.GetEncoding("windows-1251");
-        //    var filePath = Path.Combine(Directory.GetCurrentDirectory(), "Files", file.FileName);
-        //    try
-        //    {
+        [HttpPost("upload")]
+        public async Task<ActionResult<List<MedicalCareFormDictionary>>> UploadFile(IFormFile file)
+        {
 
-        //        Directory.CreateDirectory(Path.GetDirectoryName(filePath));
+            var filePath = Path.Combine(Directory.GetCurrentDirectory(), "Files", file.FileName);
 
-        //        using (var stream = new FileStream(filePath, FileMode.Create))
-        //        {
-        //            await file.CopyToAsync(stream);
-        //        }
-        //    }
-        //    catch
-        //    {
-                
-        //    }
-        //    MedicalCareFormReader reader = new();
-        //    List<MedicalCareFormDictionary> dictList = reader.ReadFromXml(filePath);
-        //    return await GetAllDictionaries();
-        //}
+            //Directory.CreateDirectory(Path.GetDirectoryName(filePath));
+
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                await file.CopyToAsync(stream);
+            };
+            
+            MedicalCareFormReader reader = new();
+            List<MedicalCareFormDictionary> newDictionariesList = reader.ReadFromXml(filePath);
+
+            var oldDictionaries = await _repository.GetAll().ToListAsync();
+            foreach (var oldDictionary in oldDictionaries)
+            {
+                var dictionaryToDelete = await _repository.GetByKeyAsync(oldDictionary.Id);
+                if (dictionaryToDelete is not null)
+                {
+                    await _repository.VirtualDelete(dictionaryToDelete, 0);
+                }
+            }
+            await _repository.SaveChangesAsync();
+
+            foreach (var newDictionary in newDictionariesList)
+            {
+                var dictionary = new MedicalCareFormDictionary
+                {
+                    Id = newDictionary.Id,
+                    Code = newDictionary.Code,
+                    Name = newDictionary.Name,
+                    BeginDate = newDictionary.BeginDate,
+                    EndDate = newDictionary.EndDate
+                };
+                _repository.Add(dictionary);
+            }
+            await _repository.SaveChangesAsync();
+
+            return await GetAll();
+        }
     }
 }
