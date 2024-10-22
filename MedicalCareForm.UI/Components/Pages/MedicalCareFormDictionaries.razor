@@ -1,0 +1,162 @@
+﻿@page "/weather"
+@attribute [StreamRendering]
+
+@rendermode RenderMode.InteractiveServer
+@inject IHttpClientFactory ClientFactory
+@using MedicalCareForm.Data.Models
+@using MedicalCareForm.Share.DTOs
+
+<PageTitle>Классификатор форм оказания медицинской помощи</PageTitle>
+
+<h1>Классификатор форм оказания медицинской помощи</h1>
+
+@if (dictionaries == null)
+{
+    <p><em>Загрузка...</em></p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Код</th>
+                <th>Название</th>
+                <th>Дата начала</th>
+                <th>Дата конца</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var dictionary in dictionaries)
+            {
+                <tr class="@GetRowClass(dictionary)" @onclick="()=>SelectRow(dictionary)">
+                    <td>@dictionary.Id</td>
+                    <td>@dictionary.Code</td>
+                    <td>@dictionary.Name</td>
+                    <td>@dictionary.BeginDate.ToShortDateString()</td>
+                    <td>@dictionary.EndDate.ToShortDateString()</td>
+                    <td>
+                        <button type="button" class="btn btn-danger" @onclick="@(async ()=> await Delete(dictionary.Id))">Удалить</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+<div>
+    <p>
+        Код:<br />
+        <input @bind-value="dictionary.Code" />
+    </p>
+    <p>
+        Название:<br />
+        <input @bind-value="dictionary.Name" />
+    </p>
+    <p>
+        Дата начала:<br />
+        <input @bind-value="dictionary.BeginDate" />
+    </p>
+    <p>
+        Дата конца:<br />
+        <input @bind-value="dictionary.EndDate" />
+    </p>
+    <p>
+        @if (dictionary.Id == 0)
+        {
+            <button type="button" class="btn btn-primary" @onclick="Submit">Добавить</button>
+        }
+        else
+        {
+            <button type="button" class="btn btn-primary" @onclick="Submit">Сохранить</button>
+        }
+    </p>
+    <p>
+        <InputFile OnChange="UploadFile"/>
+    </p>
+</div>
+
+@code {
+    List<MedicalCareFormDictionaryDTO> dictionaries = [];
+    MedicalCareFormDictionaryDTO dictionary = new();
+    HttpClient httpClient;
+
+    protected override async Task OnInitializedAsync()
+    {
+        httpClient = ClientFactory.CreateClient();
+        httpClient.BaseAddress = new Uri("https://localhost:7274/api/v1/MedicalCareFormDictionary");
+        await LoadData();
+    }
+
+    async Task LoadData()
+    {
+        dictionaries = await httpClient.GetFromJsonAsync<List<MedicalCareFormDictionaryDTO>>(httpClient.BaseAddress);
+    }
+
+    async Task Submit()
+    {
+        if (dictionary.Id == 0)
+        {
+            await httpClient.PostAsJsonAsync(httpClient.BaseAddress, dictionary);
+        }
+        else
+        {
+            await httpClient.PutAsJsonAsync($"{httpClient.BaseAddress}/{dictionary.Id}", dictionary);
+        }
+
+        dictionary.Id = 0;
+        dictionary.Code = 0;
+        dictionary.Name = "";
+        dictionary.BeginDate = DateTime.Now;
+        dictionary.EndDate = DateTime.Now;
+        await LoadData();
+    }
+
+    async Task Delete(int id)
+    {
+        await httpClient.DeleteAsync($"{httpClient.BaseAddress}/{id}");
+        await LoadData();
+    }
+
+    async Task SelectRow(MedicalCareFormDictionaryDTO dict)
+    {
+        if (dictionary.Id == dict.Id)
+        {
+            dictionary.Id = 0;
+            dictionary.Code = 0;
+            dictionary.Name = "";
+            dictionary.BeginDate = DateTime.Now;
+            dictionary.EndDate = DateTime.Now;
+        }
+        else
+        {
+            dictionary.Id = dict.Id;
+            dictionary.Code = dict.Code;
+            dictionary.Name = dict.Name;
+            dictionary.BeginDate = dict.BeginDate;
+            dictionary.EndDate = dict.EndDate;
+        }
+    }
+
+    string GetRowClass(MedicalCareFormDictionaryDTO dict)
+    {
+        if (dictionary.Id == dict.Id)
+        {
+            return "selected-row";
+        }
+        return "custom-row";
+    }
+
+    async Task UploadFile(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        var content = new MultipartFormDataContent();
+        var fileContent = new StreamContent(file.OpenReadStream());
+        content.Add(fileContent, "file", file.Name);
+        await httpClient.PostAsync($"{httpClient.BaseAddress}/upload", content);
+        await LoadData();
+    }
+
+
+
+}

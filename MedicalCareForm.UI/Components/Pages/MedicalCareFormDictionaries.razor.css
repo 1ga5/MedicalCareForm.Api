@@ -1,0 +1,13 @@
+﻿.custom-row:hover {
+    background-color: #ddd;
+    cursor: pointer;
+}
+
+.selected-row {
+    background-color: #9ACDF9;
+}
+
+    .selected-row:hover {
+        background-color: #9ACDF9;
+        cursor: pointer;
+    }
