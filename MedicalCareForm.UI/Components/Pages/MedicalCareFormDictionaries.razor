@@ -28,16 +28,16 @@ else
             </tr>
         </thead>
         <tbody>
-            @foreach (var dictionary in dictionaries)
+            @foreach (var dict in dictionaries)
             {
-                <tr class="@GetRowClass(dictionary)" @onclick="()=>SelectRow(dictionary)">
-                    <td>@dictionary.Id</td>
-                    <td>@dictionary.Code</td>
-                    <td>@dictionary.Name</td>
-                    <td>@dictionary.BeginDate.ToShortDateString()</td>
-                    <td>@dictionary.EndDate.ToShortDateString()</td>
+                <tr class="@GetRowClass(dict)" @onclick="()=>SelectRow(dict)">
+                    <td>@dict.Id</td>
+                    <td>@dict.Code</td>
+                    <td>@dict.Name</td>
+                    <td>@dict.BeginDate.ToShortDateString()</td>
+                    <td>@dict.EndDate.ToShortDateString()</td>
                     <td>
-                        <button type="button" class="btn btn-danger" @onclick="@(async ()=> await Delete(dictionary.Id))">Удалить</button>
+                        <button type="button" class="btn btn-danger" @onclick="@(async ()=> await Delete(dict.Id))">Удалить</button>
                     </td>
                 </tr>
             }
@@ -79,7 +79,7 @@ else
 @code {
     List<MedicalCareFormDictionaryDTO> dictionaries = [];
     MedicalCareFormDictionaryDTO dictionary = new();
-    HttpClient httpClient;
+    HttpClient httpClient = null!;
 
     protected override async Task OnInitializedAsync()
     {
@@ -90,7 +90,7 @@ else
 
     async Task LoadData()
     {
-        dictionaries = await httpClient.GetFromJsonAsync<List<MedicalCareFormDictionaryDTO>>(httpClient.BaseAddress);
+        dictionaries = await httpClient.GetFromJsonAsync<List<MedicalCareFormDictionaryDTO>>(httpClient.BaseAddress) ?? dictionaries;
     }
 
     async Task Submit()
@@ -118,7 +118,7 @@ else
         await LoadData();
     }
 
-    async Task SelectRow(MedicalCareFormDictionaryDTO dict)
+    void SelectRow(MedicalCareFormDictionaryDTO dict)
     {
         if (dictionary.Id == dict.Id)
         {
@@ -156,7 +156,4 @@ else
         await httpClient.PostAsync($"{httpClient.BaseAddress}/upload", content);
         await LoadData();
     }
-
-
-
 }
