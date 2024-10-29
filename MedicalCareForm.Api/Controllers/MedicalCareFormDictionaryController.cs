@@ -13,9 +13,9 @@ namespace MedicalCareForm.Api.Controllers
     [ApiController]
     public class MedicalCareFormDictionaryController : ControllerBase
     {
-        private readonly MedicalCareFormDictionaryRepository _repository;
+        private readonly IRepository<MedicalCareFormDictionary> _repository;
 
-        public MedicalCareFormDictionaryController(MedicalCareFormDictionaryRepository repository)
+        public MedicalCareFormDictionaryController(IRepository<MedicalCareFormDictionary> repository)
         {
             _repository = repository;
         }
@@ -61,22 +61,30 @@ namespace MedicalCareForm.Api.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<List<MedicalCareFormDictionary>>> Add(MedicalCareFormDictionaryDTO dictionaryDTO)
+        public async Task<ActionResult<MedicalCareFormDictionaryDTO>> Add(MedicalCareFormDictionaryDTO dictionaryDTO)
         {
-            MedicalCareFormDictionary dictionary = new()
+            try
             {
-                Code = dictionaryDTO.Code,
-                Name = dictionaryDTO.Name,
-                BeginDate = dictionaryDTO.BeginDate,
-                EndDate = dictionaryDTO.EndDate
-            };
+                MedicalCareFormDictionary dictionary = new()
+                {
+                    Code = dictionaryDTO.Code,
+                    Name = dictionaryDTO.Name,
+                    BeginDate = dictionaryDTO.BeginDate,
+                    EndDate = dictionaryDTO.EndDate
+                };
 
-            _repository.Add(dictionary);
-            await _repository.SaveChangesAsync();
+                _repository.Add(dictionary);
+                await _repository.SaveChangesAsync();
 
-            dictionaryDTO.Id = dictionary.Id;
+                dictionaryDTO.Id = dictionary.Id;
 
-            return Ok(dictionaryDTO);
+                return Ok(dictionaryDTO);
+            }
+            catch (Exception ex) 
+            {
+                return BadRequest(ex.Message);
+            }
+            
         }
 
         [HttpPut("{id}")]

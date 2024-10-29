@@ -6,7 +6,7 @@ using MedicalCareForm.Data.Models;
 
 namespace MedicalCareForm.Api.Services
 {
-    class MedicalCareFormReader : IDictionaryXMlReader<MedicalCareFormDictionary>
+    public class MedicalCareFormReader : IDictionaryXMlReader<MedicalCareFormDictionary>
     {
         public List<MedicalCareFormDictionary> ReadFromXml(string filePath)
         {

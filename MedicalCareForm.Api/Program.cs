@@ -1,8 +1,8 @@
 using MedicalCareForm.Api.Repositories;
 using MedicalCareForm.Data;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using System.Text;
+using MedicalCareForm.Data.Models;
 
 Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
@@ -23,7 +23,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 //builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("MsSqlConnection")));
 
-builder.Services.AddScoped<MedicalCareFormDictionaryRepository>();
+builder.Services.AddScoped<IRepository<MedicalCareFormDictionary>, MedicalCareFormDictionaryRepository>();
 
 var app = builder.Build();
 
