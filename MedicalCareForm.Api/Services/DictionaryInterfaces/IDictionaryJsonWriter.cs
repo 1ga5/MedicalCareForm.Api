@@ -2,7 +2,7 @@
 
 namespace MedicalCareForm.Api.Services.DictionaryInterfaces
 {
-    interface IDictionaryJsonWriter<T> where T : DictionaryBaseType
+    public interface IDictionaryJsonWriter<T> where T : DictionaryBaseType
     {
         bool WriteToJson(List<T> dictionaryList, string outputPath);
     }

@@ -2,7 +2,7 @@
 
 namespace MedicalCareForm.Api.Services.DictionaryInterfaces
 {
-    interface IDictionaryXMlReader<T> where T : DictionaryBaseType
+    public interface IDictionaryXMlReader<T> where T : DictionaryBaseType
     {
         List<T> ReadFromXml(string filePath);
     }

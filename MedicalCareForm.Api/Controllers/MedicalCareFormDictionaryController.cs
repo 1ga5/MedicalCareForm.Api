@@ -1,11 +1,9 @@
 ﻿using MedicalCareForm.Api.Repositories;
 using MedicalCareForm.Share.DTOs;
 using MedicalCareForm.Data.Models;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MedicalCareForm.Api.Services;
-using System.Text;
 
 namespace MedicalCareForm.Api.Controllers
 {
@@ -166,7 +164,18 @@ namespace MedicalCareForm.Api.Controllers
             }
             await _repository.SaveChangesAsync();
 
-            return await GetAll();
+            var newDictionaries = await _repository.GetAll().ToListAsync();
+
+            var newDictionariesDTO = newDictionaries.Select(d => new MedicalCareFormDictionaryDTO
+            {
+                Id = d.Id,
+                Code = d.Code,
+                Name = d.Name,
+                BeginDate = d.BeginDate,
+                EndDate = d.EndDate
+            });
+
+            return Ok(newDictionariesDTO);
         }
     }
 }
